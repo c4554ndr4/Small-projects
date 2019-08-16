@@ -8,4 +8,4 @@ NeuralNet (Jupyter notebook):
 Some small, practice neural networks I built so I could understand backpropogation calculus better. These only use numpy functions, not machine learning libraries, so they are not very powerful. I started with examples with one layer and built up to the xor neural net.
 
 Xor Neural Net (python):
-A CNN that learns the xor bit operation using 2 fully connected layers. 
+An NN that learns the xor bit operation using 2 fully connected layers. 
