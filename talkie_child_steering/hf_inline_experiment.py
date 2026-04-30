@@ -261,11 +261,13 @@ def main():
     if os.environ.get("DRY_RUN"):
         print((out/"plan.json").read_text())
         upload(out)
+        emit_artifact_to_logs(out)
         return
     if os.environ.get("PREFLIGHT_ONLY"):
         import shutil, torch, talkie
         mark(out,"preflight_only",{"torch":torch.__version__,"talkie":getattr(talkie,"__version__","unknown"),"cuda":torch.cuda.is_available(),"disk":shutil.disk_usage("/tmp")._asdict()})
         upload(out)
+        emit_artifact_to_logs(out)
         return
     import torch
     from talkie import Talkie
