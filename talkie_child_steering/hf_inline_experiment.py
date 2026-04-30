@@ -229,8 +229,12 @@ def upload(outdir):
         print("[upload]",repo,outdir.name,flush=True)
     except Exception as e:
         print("[upload] direct failed; trying PR",repr(e),flush=True)
-        api.upload_folder(repo_id=repo,repo_type="dataset",folder_path=str(outdir),path_in_repo=outdir.name,create_pr=True)
-        print("[upload_pr]",repo,outdir.name,flush=True)
+        try:
+            api.upload_folder(repo_id=repo,repo_type="dataset",folder_path=str(outdir),path_in_repo=outdir.name,create_pr=True)
+            print("[upload_pr]",repo,outdir.name,flush=True)
+        except Exception as e2:
+            (Path(outdir)/"upload_failed.txt").write_text(repr(e)+"\n\n"+repr(e2)+"\n")
+            print("[upload_failed_nonfatal]",repr(e2),flush=True)
 def mark(out,stage,extra=None):
     payload={"stage":stage,"time_utc":datetime.now(timezone.utc).isoformat()}
     if extra: payload.update(extra)
