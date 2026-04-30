@@ -1,4 +1,4 @@
-import json, math, os, random, re, statistics, tarfile, time, traceback
+import base64, json, math, os, random, re, statistics, tarfile, time, traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -235,6 +235,18 @@ def upload(outdir):
         except Exception as e2:
             (Path(outdir)/"upload_failed.txt").write_text(repr(e)+"\n\n"+repr(e2)+"\n")
             print("[upload_failed_nonfatal]",repr(e2),flush=True)
+def emit_artifact_to_logs(outdir):
+    if not os.environ.get("LOG_ARTIFACT"):
+        return
+    tar_path=Path(str(outdir)+".tar.gz")
+    if not tar_path.exists():
+        with tarfile.open(tar_path,"w:gz") as t:
+            t.add(outdir,arcname=Path(outdir).name)
+    data=base64.b64encode(tar_path.read_bytes()).decode()
+    print(f"[artifact_b64_begin] name={tar_path.name} bytes={tar_path.stat().st_size} b64={len(data)}",flush=True)
+    for i in range(0,len(data),3800):
+        print("[artifact_b64] "+data[i:i+3800],flush=True)
+    print("[artifact_b64_end]",flush=True)
 def mark(out,stage,extra=None):
     payload={"stage":stage,"time_utc":datetime.now(timezone.utc).isoformat()}
     if extra: payload.update(extra)
@@ -282,7 +294,7 @@ def main():
     be=bests(fo or br,vecs,2); dump(out/"best_steering_configs.json",[{k:v for k,v in b.items() if k!="vector"} for b in be])
     ev=finale(talkie,be,out,budget,96); dump(out/"final_eval_summary.json",summ(ev)); mark(out,"final_eval_done",{"records":len(ev),"elapsed_min":budget.el(),"left_min":budget.left()})
     with tarfile.open(str(out)+".tar.gz","w:gz") as t: t.add(out,arcname=out.name)
-    upload(out); print("[done]",budget.el(),budget.left(),flush=True)
+    upload(out); emit_artifact_to_logs(out); print("[done]",budget.el(),budget.left(),flush=True)
 def safe_main():
     out=None
     try:
@@ -297,5 +309,7 @@ def safe_main():
         print("[failed]",repr(e),flush=True)
         try: upload(out)
         except Exception as upload_error: print("[upload_failed]",repr(upload_error),flush=True)
+        try: emit_artifact_to_logs(out)
+        except Exception as artifact_error: print("[artifact_log_failed]",repr(artifact_error),flush=True)
         raise
 if __name__=="__main__": safe_main()
