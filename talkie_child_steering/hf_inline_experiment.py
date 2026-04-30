@@ -224,8 +224,13 @@ def upload(outdir):
         api.create_repo(repo,repo_type="dataset",private=True,exist_ok=True)
     except Exception as e:
         print("[upload] create_repo skipped/failed",repr(e),flush=True)
-    api.upload_folder(repo_id=repo,repo_type="dataset",folder_path=str(outdir),path_in_repo=outdir.name)
-    print("[upload]",repo,outdir.name,flush=True)
+    try:
+        api.upload_folder(repo_id=repo,repo_type="dataset",folder_path=str(outdir),path_in_repo=outdir.name)
+        print("[upload]",repo,outdir.name,flush=True)
+    except Exception as e:
+        print("[upload] direct failed; trying PR",repr(e),flush=True)
+        api.upload_folder(repo_id=repo,repo_type="dataset",folder_path=str(outdir),path_in_repo=outdir.name,create_pr=True)
+        print("[upload_pr]",repo,outdir.name,flush=True)
 def mark(out,stage,extra=None):
     payload={"stage":stage,"time_utc":datetime.now(timezone.utc).isoformat()}
     if extra: payload.update(extra)
